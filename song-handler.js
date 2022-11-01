@@ -27,8 +27,8 @@ async function updateCurrentSong() {
         // Set the rest of the attributes that don't rely on the song being from the songlist or not
         currentSong.played = false; // default
         currentSong.id = entry.id;
-        console.log(entry);
-        console.log(currentSong);
+        //console.log(entry);
+        //console.log(currentSong);
     }
     return currentSong;
 }
