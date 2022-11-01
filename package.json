@@ -1,0 +1,13 @@
+{
+  "name": "stamper",
+  "version": "1.0.0",
+  "description": "Windows service that listens for a keystroke trigger to process a timestamp from a file and combine it with a song title to create a track list for YouTube videos from OBS recordings",
+  "main": "index.js",
+  "scripts": {
+    "watch": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Freyr H",
+  "license": "ISC"
+}
