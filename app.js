@@ -11,7 +11,7 @@ let songHistory = {};
 async function setInitialValues() {
     currentSong = await updateCurrentSong();
     songHistory = await getSongHistory();
-    pushButton();
+    pushButton(currentSong, songHistory);
 }
 setInitialValues();
 
@@ -36,7 +36,7 @@ client.on('disconnect', () => {
     console.log(`Socket.io-client disconnected`);
 });
 
-function pushButton() {
-    processNewTimeStamp();
+function pushButton(currentSong, songHistory) {
+    processNewTimeStamp(currentSong, songHistory);
 }
 
