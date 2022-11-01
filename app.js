@@ -1,5 +1,6 @@
 import io from 'socket.io-client';
 import { updateCurrentSong, getSongHistory } from './song-handler.js';
+import { processNewTimeStamp } from './timestamp-handler.js';
 
 // https://api.streamersonglist.com/docs/ for endpoints. 
 const streamerId = 7325;
@@ -12,6 +13,7 @@ async function setInitialValues() {
     songHistory = await getSongHistory();
     pushButton();
 }
+setInitialValues();
 
 const client = io(`https://api.streamersonglist.com`, {
     transports: ["websocket"]
@@ -34,7 +36,7 @@ client.on('disconnect', () => {
     console.log(`Socket.io-client disconnected`);
 });
 
-function pressButton() {
-
+function pushButton() {
+    processNewTimeStamp();
 }
 
