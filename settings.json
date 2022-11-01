@@ -1,0 +1,7 @@
+{
+    "streamerId": "7325", // streamerId is the numeric `id` from `/streamers/<streamer-name` endpoint, but needs to be cast as a string for the socket event
+    "timestampSourceFolder": "", // Folder where source file is located. Leave empty to use root directory of stamper project
+    "timestampSourceFileName": "timestamp.txt", // Source of timestamp
+    "chaptersOutputFolder": "", // Folder to save the exported chapters file. Leave empty to use root directory of stamper project
+    "chaptersOutputFileName": "chapters.txt" // Name of destination export file
+}
