@@ -20,8 +20,10 @@ async function updateCurrentSong() {
         // otherwise it will be handled as a manually added entry that doesn't exist in the database
         if (typeof entry.nonlistSong !== "string") {
             currentSong = handleSongListEntry(entry.song);
+            currentSong.modifier = handleSongModifiers(entry, true)
         } else {
             currentSong = handleNonListEntry(entry);
+            currentSong.modifier = handleSongModifiers(entry, false);
         }
 
         // Set the rest of the attributes that don't rely on the song being from the songlist or not
@@ -37,7 +39,6 @@ function handleSongListEntry(song) {
     return {
         artist: song.artist,
         title: song.title,
-        modifier: handleSongModifiers(song, true)
     };
 }
 
@@ -64,7 +65,6 @@ function handleNonListEntry(song) {
             title: song.nonlistSong,
         }
     }
-    retObj.modifier = handleSongModifiers(song, false);
     return retObj;
 }
 
@@ -78,7 +78,7 @@ function handleSongModifiers(song, isListSong) {
 
     // nonlist songs can't have attribute id's but list songs can
     if (isListSong) {
-        if (song.attributeIds.includes(originalSongAttributeId)) {
+        if (song.song.attributeIds.includes(originalSongAttributeId)) {
             return "Original Song";
         }
     }
@@ -109,6 +109,7 @@ function fetchSongListData(URI) {
 
 async function getSongHistory() {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
+    return songHistory;
 }
 
-export { updateCurrentSong, getSongHistory }
+export { updateCurrentSong, getSongHistory, handleNonListEntry }
