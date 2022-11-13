@@ -1,40 +1,42 @@
 import fs, { write } from 'fs';
-import readline from 'readline';
 import { handleNonListEntry } from './song-handler.js';
 
-async function processNewTimeStamp(currentSong) {
+async function processNewTimeStamp(currentSong, startTime) {
     if (Object.keys(currentSong).length === 0) {
         return;
     }
-    const timestamp = await getLatestTimeStamp();
+    const timestamp = createTimeStamp(startTime);
     let sessionData = await loadSessionData();
-  
-    // Check if last sessions started more than 12 hours ago and reset it if it has
-    if (await checkSessionExpired(sessionData.sessionTimeStarted)) {
-        sessionData  = await resetSessionData();
-    }
-
-    //console.log(sessionData);
 
     sessionData = await addSessionEntry(sessionData, currentSong, timestamp);
 
     await writeSessionDataToFile(sessionData);
 
     exportYouTubeTimestamps(sessionData);
-} 
+}
 
-async function checkIfExistsAndUpdate(currentSong) {    
+function sortSessionDataByTime(sessionData) {
+    return sessionData.sort((a, b) => {
+        return a.timestamp.split(':').join('') - b.timestamp.split(':').join('');
+    })
+}
+
+async function revertTimestamp(currentSong) {
+    checkIfExistsAndUpdate(currentSong, true);
+}
+
+async function checkIfExistsAndUpdate(currentSong, revert = false) {    
     if (Object.keys(currentSong).length === 0) {
         return;
     }
     let sessionData = await loadSessionData();
 
-    if (sessionData.entries.length === 0) {
+    if (sessionData.length === 0) {
         return;
     }
 
     if (checkDuplicateEntry(sessionData, currentSong)) {
-        sessionData = await updateCurrentEntry(sessionData, currentSong);
+        sessionData = await updateCurrentEntry(sessionData, currentSong, revert);
     }
 
     await writeSessionDataToFile(sessionData);
@@ -46,22 +48,20 @@ async function setEntryAsPlayed(songHistory) {
         return;
     }
     let sessionData = await loadSessionData();
-    let entries = sessionData.entries;
     const items = songHistory.items;
     let temp = {};
-    for(let y = 0; y < entries.length; y++) {
-        if (!entries[y].played) {
+    for(let y = 0; y < sessionData.length; y++) {
+        if (!sessionData[y].played) {
             if (typeof items[0].nonlistSong === "string") {
                 temp = await handleNonListEntry(items[0])
             } else {                    
                 temp = items[0].song;
             }                    
-            if (temp.artist === entries[y].artist && temp.title === entries[y].title) {         
-                entries[y].played = true;
+            if (temp.artist === sessionData[y].artist && temp.title === sessionData[y].title) {         
+                sessionData[y].played = true;
             } 
         }
-    }
-    sessionData.entries = entries; 
+    } 
     writeSessionDataToFile(sessionData);
     exportYouTubeTimestamps(sessionData);
 }
@@ -71,20 +71,21 @@ async function writeSessionDataToFile(sessionData) {
 }
 
 async function exportYouTubeTimestamps(sessionData) {
-    const entries = sessionData.entries;
-    let contents = "";
+    let contents = "Track List:\r\n0:00:00 Stream Start\r\n";
 
-    if (!entries.length > 0) {
+    if (!sessionData.length > 0) {
         return;
     }
+    
+    sessionData = sortSessionDataByTime(sessionData);
 
-    for (let i = 0; i < entries.length; i++) {
-        contents += `${entries[i].timestamp} ${entries[i].title} `
-        if (entries[i].artist.length > 0) {
-            contents += `by ${entries[i].artist} `;
+    for (let i = 0; i < sessionData.length; i++) {
+        contents += `${sessionData[i].timestamp} ${sessionData[i].title} `
+        if (sessionData[i].artist.length > 0) {
+            contents += `by ${sessionData[i].artist} `;
         }
-        if (entries[i].modifier.length > 0) {
-            contents += `// ${entries[i].modifier}`;
+        if (sessionData[i].modifier.length > 0) {
+            contents += `// ${sessionData[i].modifier}`;
         }
         contents += `\r\n`;
     }
@@ -94,35 +95,37 @@ async function exportYouTubeTimestamps(sessionData) {
 }
 
 async function addSessionEntry(sessionData, currentSong, timestamp) {
-    if (currentSong.timestamp !== '0:00:00') {
-        currentSong.timestamp = timestamp;
-    }
+    currentSong.timestamp = timestamp;
     if (!checkDuplicateEntry(sessionData, currentSong)) {
-        sessionData.entries.push(currentSong);
+        sessionData.push(currentSong);
     } else {
         sessionData = await updateCurrentEntry(sessionData, currentSong);
     }
     return sessionData;
 }
 
-async function updateCurrentEntry(sessionData, currentSong) {
-    const entries = sessionData.entries;
-    for (let i = 0; i < entries.length; i++) {
-        if (entries[i].id === currentSong.id && entries[i].played === false) {
-            if (currentSong.timestamp !== '0:00:00' && currentSong.timestamp !== undefined) {
-                entries[i].timestamp = currentSong.timestamp;
+async function updateCurrentEntry(sessionData, currentSong, revert = false) {
+    for (let i = 0; i < sessionData.length; i++) {
+        if (sessionData[i].id === currentSong.id && sessionData[i].played === false) {
+            if (currentSong.timestamp !== undefined) {
+                if (revert) {
+                    let newStamp = sessionData[i].timestamp;
+                    sessionData[i].timestamp = sessionData[i].lastTimestamp;
+                    sessionData[i].lastTimestamp = newStamp;
+                } else {
+                    sessionData[i].lastTimestamp = sessionData[i].timestamp;
+                    sessionData[i].timestamp = currentSong.timestamp;
+                }
             }
-            entries[i].modifier = currentSong.modifier;
+            sessionData[i].modifier = currentSong.modifier;
         }
     }
-    sessionData.entries = entries;
     return sessionData;
 }
 
 function checkDuplicateEntry(sessionData, currentSong) {
-    const entries = sessionData.entries;
-    for (let i = 0; i < entries.length; i++) {
-        if (entries[i].id === currentSong.id) {
+    for (let i = 0; i < sessionData.length; i++) {
+        if (sessionData[i].id === currentSong.id) {
             return true; 
         }
     }
@@ -134,44 +137,11 @@ async function loadSessionData() {
 }
 
 async function resetSessionData() {
-    const resetObj = {
-        sessionTimeStarted: Date.now(),
-        entries: [],
-    }
-    return resetObj;
+    const resetObj = []
+    writeSessionDataToFile(resetObj);
 }
 
-async function checkSessionExpired(sessionTimeStarted) {
-    const sessionTimerCount = 1000 * 60 * 60 * 12;
-    const sessionTimerAge = Date.now() - sessionTimerCount; 
-    console.log(`SessionTimerAge: ${sessionTimerAge} - SessionTimeStarted: ${sessionTimeStarted}`)
-    if (sessionTimerAge > sessionTimeStarted) {
-        return true;
-    }
-    return false;
+function createTimeStamp(startTime) {
+    return new Date(Date.now() - startTime).toISOString().substr(12,7);
 }
-
-async function getLatestTimeStamp() {
-    const timeStamps = [];
-    const fileStream = fs.createReadStream('timestamp.txt');
-
-    const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-    });
-
-    let split = [];
-    for await (const line of rl) {
-        split = line.split(',');
-        timeStamps.push(split[0]);
-    }
-
-    fs.writeFile('timestamp.txt', '', () => {});
-
-    if (timeStamps.length > 0) {
-        return(timeStamps[timeStamps.length-1]);
-    } else {
-        return "0:00:00";
-    }
-}
-export { processNewTimeStamp, setEntryAsPlayed, checkIfExistsAndUpdate }
+export { processNewTimeStamp, setEntryAsPlayed, checkIfExistsAndUpdate, resetSessionData, revertTimestamp }
