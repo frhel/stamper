@@ -128,3 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+/timestamp.txt
+/exported_youtube_timestamps.txt
+/sessiondata.json
