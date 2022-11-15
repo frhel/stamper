@@ -131,3 +131,4 @@ dist
 exported_youtube_timestamps.txt
 sessiondata.json
 settings.json
+/toImport.txt
