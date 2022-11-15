@@ -1,6 +1,6 @@
 {
   "name": "stamper",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Windows service that listens for a keystroke trigger to process a timestamp from a file and combine it with a song title to create a track list for YouTube videos from OBS recordings",
   "main": "index.js",
   "type": "module",
@@ -16,6 +16,7 @@
     "nodemon": "^2.0.20"
   },
   "dependencies": {
+    "chalk": "^5.1.2",
     "chokidar": "^3.5.3",
     "mongoose": "^6.7.2",
     "node-fetch": "^3.2.10",
