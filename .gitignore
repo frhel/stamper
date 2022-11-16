@@ -129,6 +129,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 exported_youtube_timestamps.txt
-sessiondata.json
+sessiondata*.json
 settings.json
 /toImport.txt
