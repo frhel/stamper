@@ -20,7 +20,8 @@ db.once('open', function() {
 async function initialize() {
     await mongoose.connect(`mongodb+srv://${settings.db_user}:${settings.db_pwd}@${settings.db_cluster_path}`);
 
-    importAndSaveSessionToDatabase();
+    //importAndSaveSessionToDatabase();
+    //importDataFromFileByLinesAndReturnAsMap();
 
 } initialize();
 
@@ -37,8 +38,8 @@ async function importDataFromFileByLinesAndReturnAsMap() {
     const json = JSON.parse(data);
     
     const songs = new Map();
-    songs.set('startTime', new Date('2022-11-15T14:26:02.203Z'));
-    songs.set('yt_id', 'NE6xwYipEvQ');
+    songs.set('startTime', new Date('2022-11-16T14:55:16.271Z'));
+    songs.set('yt_id', 'S8Azs7rKqng');
 
     for (let i = 0; i < json.length; i++) {
         let timeStamp = json[i].timestamp.split(':');
@@ -47,9 +48,8 @@ async function importDataFromFileByLinesAndReturnAsMap() {
         );
         json[i].timestamps = [ { current: timeStamp } ];
         delete json[i].timestamp;
+        delete json[i].lastTimestamp;
     }
-
-
     songs.set('songs', json);
     console.log(songs)
     return songs;
@@ -126,14 +126,18 @@ async function saveSessionToDatabase(songs) {
 //     useFsEvents: true
 // });
 
-// const watcher2 = chokidar.watch('*.mkv', {
-//     ignored: ".mp4",
-//     cwd: 'E:\\VODs\\Temp',
-//     persistent: true,
-//     followSymlinks: false,
-//     alwaysStat: true,
-//     useFsEvents: true
-// });
+const watcher2 = chokidar.watch('*.mkv', {
+    ignored: ".mp4",
+    cwd: 'E:\\VODs\\Temp',
+    persistent: true,
+    followSymlinks: false,
+    alwaysStat: true,
+    useFsEvents: true
+});
+
+watcher2.on('add', async (path, stats) => {
+    console.log(chalk.greenBright.italic.dim(new Date(stats.birthtime).toISOString()));
+});
 
 // watcher.on('ready', async () => {
 //     watcher.on('change', async (path, stats) => {
