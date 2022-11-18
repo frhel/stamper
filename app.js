@@ -107,8 +107,8 @@ const watcher = chokidar.watch('*.mkv', {
 
 watcher.on('add', (path, stats) => {  
     if (stats) {
-        startTime = +stats.birthtime;
+        startTime = stats.birthtime;
         setInitialValues();
-        console.log(`New session initialized at ${new Date(Date.now() - startTime).toISOString()}`)
+        console.log(`New session initialized at ${new Date(startTime)}`)
     }
 });
