@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import mongoose from 'mongoose';
 import chalk from 'chalk';
 
@@ -5,6 +7,26 @@ import { Session } from './session.mongo.js';
 
 chalk.level = 1;
 
+// Backup all sessions from database to a timestamped file every time 
+async function backupSessions() {
+    const sessions = await Session.find();
+    const date = new Date();
+    const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}`;
+    const fileName = `./backups/sessiondata -${dateString}.json`;
+    const data = JSON.stringify(sessions, null, 4);
+    await fs
+        .promises
+        .writeFile(fileName, data, 'utf8')
+        .then(() => {
+            console.log(chalk.greenBright.italic.dim(`Successfully backed up sessions to ${fileName}`));
+        })
+        .catch((err) => {
+            console.log(chalk.redBright.italic.dim(`Error backing up sessions to ${fileName}`));
+            console.log(err);
+        });
+} backupSessions();
+
+// Loads the latest session from the database and returns it as an object
 async function loadSessionData(startTime) {
     // find latest session with mongoose and return it
     // if there are no sessions yet, create a new one
@@ -26,22 +48,24 @@ async function loadSessionData(startTime) {
     }
 }
 
-// function that deletes all sessions with empty entries except the latest one
-async function cleanSessions() {
+// 
+async function saveSessionData(sessionObj) {    
+    // upsert sessionObj as Session into database
     try {
-        const sessions = await Session.find().sort({ startTime: -1 });
-        if (sessions.length > 1) {
-            console.log(chalk.yellow.bold('Cleaning up garbage sessions'));
-            for (let i = 1; i < sessions.length; i++) {                
-                console.log(chalk.red.bold.italic('Deleted session: ') + chalk.white.underline.dim.italic(sessions[i].startTime));
-                await Session.findByIdAndDelete(sessions[i]._id);
-            }
-        }
-    } catch (error) {
-        console.error(chalk.red.underline.bold('Error while cleaning sessions: ', error));
+        await Session.updateOne(
+            {startTime: sessionObj.startTime},
+            sessionObj,
+            {upsert: true}
+        );
+    } catch (err) {
+        console.log(chalk.redBright.italic('Error while saving session to database'));
+        console.error(err);
+        return false;
     }
+    return true;    
 }
 
+// Creates a new session and returns it as an object
 async function createNewSession(startTime) {
     try {
         const session = new Session({
@@ -57,4 +81,21 @@ async function createNewSession(startTime) {
     }
 }
 
-export { loadSessionData, createNewSession };
+// Cleans up sessions that have no entries except the latest one
+async function cleanSessions() {
+    try {
+        const sessions = await Session.find().sort({ startTime: -1 });
+        if (sessions.length > 1) {
+            console.log(chalk.yellow.bold('Cleaning up garbage sessions'));
+            for (let i = 1; i < sessions.length; i++) {               
+                if (sessions[i].songs.length === 0) {
+                    await Session.findByIdAndDelete(sessions[i]._id);
+                    console.log(chalk.red.bold.italic('Deleted session: ') + chalk.white.underline.dim.italic(sessions[i].startTime));
+                }
+            }
+        }
+    } catch (error) {
+        console.error(chalk.red.underline.bold('Error while cleaning sessions: ', error));
+    }
+}
+export { loadSessionData, createNewSession, saveSessionData, };

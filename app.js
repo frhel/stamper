@@ -9,14 +9,12 @@ import chalk from 'chalk';
 
 import { settings } from './settings.js';
 
-import { createNewSession, loadSessionData } from './session.model.js';
-import { updateCurrentSong, getSongHistory } from './song-handler.js';
 import {
-    processNewTimeStamp,
+    startNewSession,
+    addTimeStamp,
     setEntryAsPlayed,
-    checkIfExistsAndUpdate,
     revertTimestamp
-    } from './timestamp-handler.js';
+    } from './session.controller.js';
 
 chalk.level = 1;
 
@@ -29,17 +27,11 @@ db.once('open', function() {
 // https://api.streamersonglist.com/docs/ for endpoints.
 const streamerId = Number(settings.streamerId);
 
-let currentSong = {};
-let songHistory = {};
 let startTime = 0;
-let sessionData = [];
 
 async function startUpRoutines() {
-    await mongoose.connect(`mongodb+srv://${settings.db_user}:${settings.db_pwd}@${settings.db_cluster_path}`);
-    sessionData = await loadSessionData();
-    console.log(chalk.cyan(sessionData));
-    currentSong = await updateCurrentSong();
-    songHistory = await getSongHistory();
+    await mongoose.connect(`mongodb+srv://${settings.db_user}:${settings.db_pwd}@${settings.db_cluster_path + settings.db_name + settings.db_connection_params}`);
+
 }
 
 const v = new GlobalKeyboardListener();
@@ -55,18 +47,14 @@ client.on('connect', () => {
     client.emit('join-room', `${streamerId}`);
     
 });
-client.on('queue-update', async () => {
-    currentSong = await updateCurrentSong();
-    checkIfExistsAndUpdate(currentSong, startTime);
-});
 client.on('new-playhistory', async () => {
-    songHistory = await getSongHistory();
-    setEntryAsPlayed(songHistory);
+    setEntryAsPlayed();
 
 });
 client.on('disconnect', () => {
     console.log(chalk.redBright(`Socket.io-client disconnected`));
 }); 
+
 
 
 // hotkey stuff
@@ -75,10 +63,8 @@ const detectHotkey = (e, down) => {
         && (down["LEFT ALT"] || down["RIGHT ALT"])
         && (down["LEFT SHIFT"] || down["RIGHT SHIFT"])
         && (down["LEFT CTRL"] || down["RIGHT CTRL"])) {
-        
-        setTimeout(() => {            
-            processNewTimeStamp(currentSong, startTime);
-        }, 1000);
+                   
+        addTimeStamp();
 
         // Cycle the listener to prevent repeat keystrokes
         v.removeListener(detectHotkey);
@@ -91,10 +77,8 @@ const detectHotkey = (e, down) => {
         && (down["LEFT ALT"] || down["RIGHT ALT"])
         && (down["LEFT SHIFT"] || down["RIGHT SHIFT"])
         && (down["LEFT CTRL"] || down["RIGHT CTRL"])) {
-        
-        setTimeout(() => {          
-            revertTimestamp(currentSong);
-        }, 1000);
+                
+        revertTimestamp();
 
         // Cycle the listener to prevent repeat keystrokes
         v.removeListener(detectHotkey);
@@ -138,10 +122,7 @@ watcher.on('ready', async () => {
     watcher.on('add', async (path, stats) => {
         if (stats) {
             startTime = +stats.birthtime;
-            console.log(chalk.magenta(`New file detected. Session start time updated to: `) + chalk.white.underline(new Date(startTime)));
-            console.log(chalk.magenta.italic.bold(`Initializing new session with start time: `) + chalk.white.underline(new Date(startTime)));
-            sessionData = await createNewSession(startTime);        
-            console.log(chalk.cyan(sessionData));
+            startNewSession(startTime);
         }
     });
 });

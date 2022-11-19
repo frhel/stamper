@@ -6,33 +6,38 @@ const songlistAPIUri = `https://api.streamersonglist.com`;
 const songlistAPIQueueUri = `${songlistAPIUri}/v1/streamers/${streamerId}/queue`;
 const songlistAPIHistoryUri = `${songlistAPIUri}/v1/streamers/${streamerId}/playHistory?period=stream`; // Only get entries from the current stream
 
-async function updateCurrentSong() {
-    let currentSong = {} // Make a new object for the current song
-
-    const songQueue = await fetchSongListData(songlistAPIQueueUri);
+async function getCurrentSong() {
+    const songQueue = await fetchSongListData();
 
     // Check if there is actually a song in the queue
     if (songQueue.list.length > 0) {
+
+        // format the data for our own purposes
         const entry = songQueue.list[0]; // Grab the first entry, which will be the current song
 
-        // Check whether the nonlistSong is anything other than a string.
-        // If it is, we can handle the current entry as a regular song from the songlist
-        // otherwise it will be handled as a manually added entry that doesn't exist in the database
-        if (typeof entry.nonlistSong !== "string") {
-            currentSong = handleSongListEntry(entry.song);
-            currentSong.modifier = handleSongModifiers(entry, true)
-        } else {
-            currentSong = handleNonListEntry(entry);
-            currentSong.modifier = handleSongModifiers(entry, false);
-        }
-
-        // Set the rest of the attributes that don't rely on the song being from the songlist or not
-        currentSong.played = false; // default
-        currentSong.id = entry.id;
-        //console.log(entry);
-        //console.log(currentSong);
+        const songData = processSongData(entry); // Process the song data
     }
-    return currentSong;
+    return songData;
+}
+
+function processSongData(songData) {
+    // Check whether the nonlistSong is anything other than a string.
+    // If it is, we can handle the current entry as a regular song from the songlist
+    // otherwise it will be handled as a manually added entry that doesn't exist in the database
+    if (typeof entry.nonlistSong !== "string") {
+        songData = handleSongListEntry(entry.song);
+        songData.modifier = handleSongModifiers(entry, true)
+    } else {
+        songData = handleNonListEntry(entry);
+        songData.modifier = handleSongModifiers(entry, false);
+    }
+
+    // Set the rest of the attributes that don't rely on the song being from the songlist or not
+    songData.played = false; // default
+    songData.id = entry.id;
+    //console.log(entry);
+    console.log(songData);
+    return songData;
 }
 
 function handleSongListEntry(song) {
@@ -97,9 +102,10 @@ function handleSongModifiers(song, isListSong) {
     }
 }
 
-function fetchSongListData(URI) {
+// Fetch the current songlist queue and return it as an object
+function fetchSongListData() {
     try {
-        return fetch(URI, { method: "Get" })
+        return fetch(songlistAPIQueueUri, { method: "Get" })
             .then(res => res.json());
     } catch(err) {
         console.log(err);
@@ -107,9 +113,10 @@ function fetchSongListData(URI) {
     }
 }
 
-async function getSongHistory() {
+// Fetch the played song history and return it as an object
+async function getLastPlayedSong() {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
     return songHistory;
 }
 
-export { updateCurrentSong, getSongHistory, handleNonListEntry }
+export { getCurrentSong, getLastPlayedSong, handleNonListEntry }

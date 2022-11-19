@@ -5,7 +5,9 @@ const settings = {
     "chaptersOutputFileName": "chapters.txt", // Name of destination export file
     "db_user": "master_stamper", // Database username
     "db_pwd": "YzXFxhLOT5LlTI0c", // Database password
-    "db_cluster_path": "stamper-v1.8ous7xv.mongodb.net/test?retryWrites=true&w=majority" // Database cluster path
+    "db_name": "test", // Database name
+    "db_cluster_path": "stamper-v1.8ous7xv.mongodb.net/", // Database cluster path
+    "db_connection_params": "?retryWrites=true&w=majority" // Database connection parameters
 }
 
 export { settings };
