@@ -1,6 +1,8 @@
 import fs from 'fs';
 
 import chalk from 'chalk';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import { Session } from './session.mongo.js';
 
@@ -11,7 +13,7 @@ async function backupSessions(force = false) {
     const sessions = await Session.find();
     const date = new Date();
     const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-    const fileName = `./backups/session_backup-${dateString}.json`;
+    const fileName = `${process.env.DB_BACKUP_FOLDER}session_backup-${dateString}.json`;
     const data = JSON.stringify(sessions);
     if (!fs.existsSync(fileName) || force) {
         await fs

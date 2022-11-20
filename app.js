@@ -6,8 +6,8 @@ import { GlobalKeyboardListener } from 'node-global-key-listener';
 import chokidar from 'chokidar';
 import mongoose from 'mongoose';
 import chalk from 'chalk';
-
-import { settings } from './settings.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import { initSession } from './session.model.js';
 import { checkIfSongUpdate } from './song.controller.js';
@@ -26,13 +26,12 @@ db.once('open', function() {
     console.log(chalk.greenBright.italic('Connected to database'));
 });
 
-// https://api.streamersonglist.com/docs/ for endpoints.
-const streamerId = Number(settings.streamerId);
-
+// This variable is changed by the watcher when a new file is created
+// and also when a session is restored from the database in initSession() in session.model.js
 global.SESSION_START = 0;
 
 async function startUpRoutines() {
-    await mongoose.connect(`mongodb+srv://${settings.db_user}:${settings.db_pwd}@${settings.db_cluster_path + settings.db_name + settings.db_connection_params}`);
+    await mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PWD}@${process.env.DB_CLUSTER_PATH + process.env.DB_NAME + process.env.DB_CONNECTION_PARAMS}`);
     await initSession();
     await checkIfSongUpdate();
 }
@@ -45,9 +44,9 @@ const client = io(`https://api.streamersonglist.com`, {
 
 client.on('connect', () => {
     console.log(chalk.green.italic(`Socket.io-client connection established with client Id: `) + chalk.white.italic.dim(client.id));
-    // streamerId is the numeric `id` from `/streamers/<streamer-name` endpoint
+    // process.env.STREAMER_ID is the numeric `id` from `/streamers/<streamer-name` endpoint
     // but needs to be cast as a string for the socket event
-    client.emit('join-room', `${streamerId}`);
+    client.emit('join-room', `${process.env.STREAMER_ID}`);
     
 });
 client.on('queue-update', () => {
@@ -81,11 +80,11 @@ const detectHotkey = (e, down) => {
 v.addListener(detectHotkey);
 
 // File Watching stuff
-const watcher = chokidar.watch('*.mkv', {
-    ignored: ".mp4",
+const watcher = chokidar.watch(`*${process.env.VOD_FILE_EXTENSION}`, {
+    ignored: "*",
     persistent: true,
     followSymlinks: false,
-    cwd: "E:\\VODs\\Temp\\",
+    cwd: process.env.VOD_FOLDER,
     alwaysStat: true,
     useFsEvents: true
 });
@@ -93,10 +92,10 @@ const watcher = chokidar.watch('*.mkv', {
 watcher.on('ready', async () => {
     const watched = await Object.values(watcher.getWatched())[1];
     console.log(chalk.white.dim(`Initial folder scan complete. `) + chalk.magenta.bold.italic(watched.length) + chalk.magenta.italic(' files found.'));
-    console.log(chalk.white.dim(`Watching for new files in `) + chalk.magenta.italic(settings.temp_vod_folder));
+    console.log(chalk.white.dim(`Watching for new files in `) + chalk.magenta.italic(process.env_VOD_FOLDER));
     
     if (watched.length > 0) {
-        await fs.stat(path.join(settings.temp_vod_folder, watched.at(-1)), (err, stats) => {
+        await fs.stat(path.join(process.env_VOD_FOLDER, watched.at(-1)), (err, stats) => {
             if (err) {
                 throw err;
             }

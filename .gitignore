@@ -132,3 +132,4 @@ dist
 sessiondata*.json
 settings.json
 /toImport.txt
+/nodemon.json

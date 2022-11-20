@@ -1,5 +1,8 @@
 import fs from 'fs';
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import chalk from 'chalk';
 
 import { getSessionData } from './session.model.js';
@@ -41,7 +44,7 @@ async function exportYouTubeTrackList() {
     // write the contents of the contents variable to a file
     // in the chapter_exports directory with export_session.startTime.txt as the filename
     let dateString = session.startTime.toLocaleString('default', { month: 'long' }) + ' ' + session.startTime.getDay() + ', ' + session.startTime.getFullYear();
-    let fileName = `E:\\VODs\\Temp\\${dateString} - YouTube Track List.txt`;
+    let fileName = `${process.env.CHAPTER_EXPORT_FOLDER}${dateString} - YouTube Track List.txt`;
     await fs
         .promises
         .writeFile(fileName, contents, 'utf8')
