@@ -18,6 +18,7 @@
   "dependencies": {
     "chalk": "^5.1.2",
     "chokidar": "^3.5.3",
+    "inquirer": "^9.1.4",
     "mongoose": "^6.7.2",
     "node-fetch": "^3.2.10",
     "node-global-key-listener": "^0.1.1",

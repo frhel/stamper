@@ -38,17 +38,14 @@ const SessionSchema = new schema({
             type: Number,
             required: true,
         },
+        timestampIndex: {
+            type: Number,
+            required: true,
+        },
+    
         timestamps: [{
-            current: {
-                type: Date,
-                required: true,
-                default: Date.now(),
-            },
-            previous: [{
-                type: Date,
-                required: false,
-                default: null,
-            }],
+            type: String,
+            required: true,
         }],
     }]
 });

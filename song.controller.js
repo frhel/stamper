@@ -1,29 +1,48 @@
 import fetch from 'node-fetch';
 
+import { updateSessionOnSongChange } from './session.controller.js';
+
 // https://api.streamersonglist.com/docs/ for endpoints. 
 const streamerId = 7325; // Numerical value of endpoint - Absolutely no clue where I found this to begin with
 const songlistAPIUri = `https://api.streamersonglist.com`;
 const songlistAPIQueueUri = `${songlistAPIUri}/v1/streamers/${streamerId}/queue`;
 const songlistAPIHistoryUri = `${songlistAPIUri}/v1/streamers/${streamerId}/playHistory?period=stream`; // Only get entries from the current stream
 
-async function getCurrentSong() {
-    const songQueue = await fetchSongListData();
+let SL_SONG = {};
 
+function getCurrentSong() {
+    return SL_SONG;
+}
+
+// Function to get the current song from the songlist queue
+async function fetchCurrentSong() {
+    const songQueue = await fetchSongListData(songlistAPIQueueUri);
+    let songData = {};
     // Check if there is actually a song in the queue
     if (songQueue.list.length > 0) {
 
         // format the data for our own purposes
         const entry = songQueue.list[0]; // Grab the first entry, which will be the current song
 
-        const songData = processSongData(entry); // Process the song data
+        songData = await processSongData(entry); // Process the song data
     }
     return songData;
 }
 
-function processSongData(songData) {
+// Function to check if the current song has changed
+async function checkIfSongUpdate() {
+    const currentSong = await fetchCurrentSong();
+    if (currentSong !== SL_SONG) {
+        SL_SONG = currentSong;
+        updateSessionOnSongChange();
+    }
+}
+
+function processSongData(entry) {
     // Check whether the nonlistSong is anything other than a string.
     // If it is, we can handle the current entry as a regular song from the songlist
     // otherwise it will be handled as a manually added entry that doesn't exist in the database
+    let songData = {};
     if (typeof entry.nonlistSong !== "string") {
         songData = handleSongListEntry(entry.song);
         songData.modifier = handleSongModifiers(entry, true)
@@ -34,9 +53,7 @@ function processSongData(songData) {
 
     // Set the rest of the attributes that don't rely on the song being from the songlist or not
     songData.played = false; // default
-    songData.id = entry.id;
-    //console.log(entry);
-    console.log(songData);
+    songData.request_id = entry.id;
     return songData;
 }
 
@@ -74,10 +91,6 @@ function handleNonListEntry(song) {
 }
 
 function handleSongModifiers(song, isListSong) {
-    // lav: Like A Version
-    // improv: Improvised Song with lyrics by dippy
-    // ll: Live Learn
-    let modifierList = ['lav', 'improv', 'll'];
     // The id of the "Original Song" attribute
     let originalSongAttributeId = 40118
 
@@ -89,23 +102,33 @@ function handleSongModifiers(song, isListSong) {
     }
 
     // a song will only have one modifier in note so we return on the first one we encounter
-    if (!modifierList.includes(song.note)) {
+    if (!song.note) {
         return '';
     } else {
-        if (song.note === 'lav') {
-            return "Like A Version";
-        } else if (song.note === "improv") {
-            return "Improvised song with lyrics by dip";
-        } else {
-            return "Live Learn";
+        switch (song.note.toLowerCase()) {
+            case 'lav' || 'like a version' || 'likeaversion':
+                return 'Like A Version';
+                break;
+            case 'improv' || 'imp' || 'improvised' || 'improvised song':
+                return 'Improvised Song';
+                break;
+            case 'll' || 'livelearn' || 'live learn':
+                return 'Live Learn';
+                break;
+            case 'original' || 'orig' || 'original song':
+                return 'Original Song';
+                break;
+            default:    // Should never be reached
+                return '';
+                break;
         }
     }
 }
 
 // Fetch the current songlist queue and return it as an object
-function fetchSongListData() {
+function fetchSongListData(URI) {
     try {
-        return fetch(songlistAPIQueueUri, { method: "Get" })
+        return fetch(URI, { method: "Get" })
             .then(res => res.json());
     } catch(err) {
         console.log(err);
@@ -113,10 +136,24 @@ function fetchSongListData() {
     }
 }
 
+// Function to make history data look like queue data so we can reuse the processSongData function
+function convertHistoryToSongListData(song) {
+    if (song.song) {
+        song.song.attributeIds = [];
+    }
+    return song;
+}
+
 // Fetch the played song history and return it as an object
 async function getLastPlayedSong() {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
-    return songHistory;
+    let songData = {};
+    // Check if there is actually a song in the queue
+    if (songHistory.total > 0) {
+        songData = convertHistoryToSongListData(songHistory.items[0]);        
+        songData = processSongData(songData); // Process the song data
+    }
+    return songData;
 }
 
-export { getCurrentSong, getLastPlayedSong, handleNonListEntry }
+export { getCurrentSong, getLastPlayedSong, checkIfSongUpdate }
