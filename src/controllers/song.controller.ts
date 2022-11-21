@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 
 import { updateSessionOnSongChange } from './session.controller.js';
+import type { ISong } from '../interfaces/ISong';
 
 // https://api.streamersonglist.com/docs/ for endpoints. 
 const streamerId = 7325; // Numerical value of endpoint - Absolutely no clue where I found this to begin with
@@ -8,24 +9,23 @@ const songlistAPIUri = `https://api.streamersonglist.com`;
 const songlistAPIQueueUri = `${songlistAPIUri}/v1/streamers/${streamerId}/queue`;
 const songlistAPIHistoryUri = `${songlistAPIUri}/v1/streamers/${streamerId}/playHistory?period=stream`; // Only get entries from the current stream
 
-let SL_SONG = {};
+let SL_SONG: ISong;
 
-function getCurrentSong() {
+function getCurrentSong(): ISong {
     return SL_SONG;
 }
 
 // Function to get the current song from the songlist queue
-async function fetchCurrentSong() {
+async function fetchCurrentSong(): Promise<ISong> {
     const songQueue = await fetchSongListData(songlistAPIQueueUri);
-    let songData = {};
     // Check if there is actually a song in the queue
+    let songData: ISong;
+    let entry = {};
     if (songQueue.list.length > 0) {
-
         // format the data for our own purposes
-        const entry = songQueue.list[0]; // Grab the first entry, which will be the current song
-
-        songData = await processSongData(entry); // Process the song data
+        entry = songQueue.list[0]; // Grab the first entry, which will be the current song
     }
+    songData = await processSongData(entry); // Process the song data
     return songData;
 }
 
@@ -38,33 +38,41 @@ async function checkIfSongUpdate() {
     }
 }
 
-function processSongData(entry) {
+function processSongData(entry: any): ISong {
     // Check whether the nonlistSong is anything other than a string.
     // If it is, we can handle the current entry as a regular song from the songlist
     // otherwise it will be handled as a manually added entry that doesn't exist in the database
-    let songData = {};
-    if (typeof entry.nonlistSong !== "string") {
-        songData = handleSongListEntry(entry.song);
-        songData.modifier = handleSongModifiers(entry, true)
-    } else {
-        songData = handleNonListEntry(entry);
-        songData.modifier = handleSongModifiers(entry, false);
+    let tempData: any;
+    if (entry) {
+        if (typeof entry.nonlistSong !== "string") {
+            tempData = handleSongListEntry(entry.song);
+            tempData.modifier = handleSongModifiers(entry, true)
+        } else {
+            tempData = handleNonListEntry(entry);
+            tempData.modifier = handleSongModifiers(entry, false);
+        }
     }
-
-    // Set the rest of the attributes that don't rely on the song being from the songlist or not
-    songData.played = false; // default
-    songData.request_id = entry.id;
+    
+    let songData: ISong = {
+        artist: tempData.artist || '',
+        title: tempData.title || '',
+        modifier: tempData.modifier || '',    
+        isPlayed: false,
+        request_id: entry.id || '',
+        timestampIndex: 0,
+        timestamps: []
+    }
     return songData;
 }
 
-function handleSongListEntry(song) {
+function handleSongListEntry(song: any) {
     return {
         artist: song.artist,
         title: song.title,
     };
 }
 
-function handleNonListEntry(song) {
+function handleNonListEntry(song: any) {
     // Split on " - " as per sepecification "{artist} - {songtitle}"
     let retObj = {};
     let splitStr = [];
@@ -90,7 +98,7 @@ function handleNonListEntry(song) {
     return retObj;
 }
 
-function handleSongModifiers(song, isListSong) {
+function handleSongModifiers(song: any, isListSong: any) {
     // The id of the "Original Song" attribute
     let originalSongAttributeId = 40118
 
@@ -108,36 +116,30 @@ function handleSongModifiers(song, isListSong) {
         switch (song.note.toLowerCase()) {
             case 'lav' || 'like a version' || 'likeaversion':
                 return 'Like A Version';
-                break;
             case 'improv' || 'imp' || 'improvised' || 'improvised song':
                 return 'Improvised Song';
-                break;
             case 'll' || 'livelearn' || 'live learn':
                 return 'Live Learn';
-                break;
             case 'original' || 'orig' || 'original song':
                 return 'Original Song';
-                break;
             default:    // Should never be reached
                 return '';
-                break;
         }
     }
 }
 
 // Fetch the current songlist queue and return it as an object
-function fetchSongListData(URI) {
-    try {
-        return fetch(URI, { method: "Get" })
-            .then(res => res.json());
-    } catch(err) {
-        console.log(err);
-        return { error: err };
+function fetchSongListData(URI: string) {
+    let songData: any = fetch(URI, { method: "Get" })
+            .then(res => res.json())
+            .catch(err => console.log(err));
+    if (songData != null) {
+        return songData;
     }
 }
 
 // Function to make history data look like queue data so we can reuse the processSongData function
-function convertHistoryToSongListData(song) {
+function convertHistoryToSongListData(song: any) {
     if (song.song) {
         song.song.attributeIds = [];
     }
@@ -145,14 +147,14 @@ function convertHistoryToSongListData(song) {
 }
 
 // Fetch the played song history and return it as an object
-async function getLastPlayedSong() {
+async function getLastPlayedSong(): Promise<ISong> {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
-    let songData = {};
-    // Check if there is actually a song in the queue
-    if (songHistory.total > 0) {
-        songData = convertHistoryToSongListData(songHistory.items[0]);        
-        songData = processSongData(songData); // Process the song data
+    let tempData: any = {};
+    let songData: ISong;
+    if (songHistory.items.length > 0) {
+        tempData = convertHistoryToSongListData(songHistory.items[0]);
     }
+    songData = processSongData(tempData); // Process the song data
     return songData;
 }
 

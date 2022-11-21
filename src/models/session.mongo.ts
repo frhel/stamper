@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
+import type { ISession } from '../interfaces/ISession';
 
-const schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 // remove quotation marks from the following object
-const SessionSchema = new schema({
+const SessionSchema = new Schema({
     startTime: {
         type: Date,
         required: true,
@@ -12,8 +13,8 @@ const SessionSchema = new schema({
     },
     yt_id: {
         type: String,
-        required: false,
-        default: null,
+        required: true,
+        default: '',
     },
     songs: [{
         artist: {
@@ -26,8 +27,8 @@ const SessionSchema = new schema({
         },
         modifier: {
             type: String,
-            required: false,
-            default: null,
+            required: true,
+            default: '',
         },
         isPlayed: {
             type: Boolean,
@@ -50,6 +51,6 @@ const SessionSchema = new schema({
     }]
 });
 
-const Session = mongoose.model('Session', SessionSchema);
+const Session = mongoose.model<ISession>('Session', SessionSchema);
 
 export { Session };
