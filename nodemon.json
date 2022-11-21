@@ -2,5 +2,5 @@
     "ignore": ["*.json*"], 
     "watch": ["src"],
     "ext": "ts,.js",
-    "exec": "ts-node ./src/app.ts"
+    "exec": "ts-node --files --esm ./src/app.ts"
 }

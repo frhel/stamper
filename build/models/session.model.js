@@ -1,16 +1,11 @@
 import fs from 'fs';
-
 import chalk from 'chalk';
-import 'dotenv/config'
-
+import 'dotenv/config';
 import { Session } from './session.mongo.js';
-import type { ISession } from '../interfaces/ISession';
-
 chalk.level = 1;
-
 // Backup all sessions from database to a timestamped file on every startup if the file doesn't exist
-async function backupSessions(force: boolean = false) {
-    const sessions: ISession[] = await Session.find();
+async function backupSessions(force = false) {
+    const sessions = await Session.find();
     const date = new Date();
     const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     const fileName = `${process.env['DB_BACKUP_FOLDER']}session_backup-${dateString}.json`;
@@ -20,62 +15,56 @@ async function backupSessions(force: boolean = false) {
             .promises
             .writeFile(fileName, data, 'utf8')
             .then(() => {
-                console.log(chalk.greenBright.italic.dim(`Successfully backed up sessions to ${fileName}`));
-            })
+            console.log(chalk.greenBright.italic.dim(`Successfully backed up sessions to ${fileName}`));
+        })
             .catch((err) => {
-                console.log(chalk.redBright.italic.dim(`Error backing up sessions to ${fileName}`));
-                console.log(err);
-            });
-    } else {
+            console.log(chalk.redBright.italic.dim(`Error backing up sessions to ${fileName}`));
+            console.log(err);
+        });
+    }
+    else {
         console.log(chalk.yellowBright.italic.dim(`Backup file ${fileName} already exists`));
     }
-} backupSessions();
-
+}
+backupSessions();
 async function initSession() {
     let latestSession = await getSessionData();
     if (!latestSession) {
         return;
     }
-    
     // variable with 12 hours in milliseconds
     const twelveHours = 12 * 60 * 60 * 1000;
     if (!latestSession || Date.now() - latestSession.startTime.getTime() > twelveHours) {
         console.log(chalk.bgYellowBright.bold.underline(' Old session or no session found, creating new one '));
         latestSession = await createNewSession();
-    } else {
+    }
+    else {
         console.log(chalk.bgGreenBright.bold.underline(' Session found, loading data '));
-        global.SESSION_START = latestSession.startTime; 
+        global.SESSION_START = latestSession.startTime;
     }
     console.log(chalk.white.dim('Loaded session: ') + chalk.magenta.italic(latestSession?.startTime));
 }
-
-
 // Loads the latest session from the database and returns it as an object
-const getSessionData = async (): Promise<ISession> => {
-    let session = await Session.findOne().sort({ startTime: -1 }).lean<ISession>();
+const getSessionData = async () => {
+    let session = await Session.findOne().sort({ startTime: -1 }).lean();
     if (session == null) {
         console.log(chalk.redBright.italic('No session found in database'));
     }
     return session;
-}
-
+};
 // 
-async function saveSessionData(session: ISession) {
+async function saveSessionData(session) {
     try {
-        await Session.updateOne(
-            {startTime: session.startTime},
-            session,
-            {upsert: true}
-        );
-    } catch (err) {
+        await Session.updateOne({ startTime: session.startTime }, session, { upsert: true });
+    }
+    catch (err) {
         console.log(chalk.redBright.italic('Error while saving session to database'));
         console.error(err);
         return false;
     }
     // console.log(chalk.greenBright.italic('Successfully saved session to database'));
-    return true;    
+    return true;
 }
-
 // Creates a new session and returns it as an object
 async function createNewSession(startTime = global.SESSION_START) {
     const session = new Session({
@@ -88,7 +77,6 @@ async function createNewSession(startTime = global.SESSION_START) {
     }
     return session;
 }
-
 // Cleans up sessions that have no entries except the latest one
 // async function cleanSessions() {
 //     try {
@@ -115,5 +103,4 @@ async function createNewSession(startTime = global.SESSION_START) {
 //         console.error(chalk.red.underline.bold('Error while cleaning sessions: ', error));
 //     }
 // }
-
 export { createNewSession, saveSessionData, initSession, getSessionData, backupSessions };

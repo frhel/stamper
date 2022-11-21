@@ -1,16 +1,10 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-
 import { getSessionData, saveSessionData, backupSessions } from '../models/session.model.js';
 import { exportYouTubeTrackList } from './youtube.controller.js';
-import type { ISong } from '../interfaces/ISong';
-
-
 chalk.level = 1;
-
 // Open a menu to allow the user to change the current song's to a different one
 async function selectNewTimestampIndex() {
-    
     let session = await getSessionData();
     if (session == null) {
         console.log(chalk.red.italic('Failed to get session data'));
@@ -32,16 +26,16 @@ async function selectNewTimestampIndex() {
             ].concat(session.songs.map(song => {
                 return {
                     name: `[${chalk.white.bold(song.timestamps[song.timestampIndex])}] ${chalk.cyan.bold.italic(song.title)} by ${chalk.cyan.bold.italic(song.artist)}`,
-                    value: session!.songs.indexOf(song)
-                }
+                    value: session.songs.indexOf(song)
+                };
             }).reverse())
         }
-    ]).then(async answer => {
+    ]).then(async (answer) => {
         if (answer.song === -1) {
             console.log(chalk.yellow.dim('Cancelled timestamp selection'));
             return openMainMenu();
         }
-        const song: ISong = session!.songs[answer.song]!;
+        const song = session.songs[answer.song];
         let curr = ` `;
         inquirer.prompt([
             {
@@ -57,38 +51,39 @@ async function selectNewTimestampIndex() {
                     if (song.timestamps.indexOf(timestamp) === song.timestampIndex) {
                         curr = `${chalk.cyan.italic.dim('Current timestamp')}`;
                         timestamp = `${chalk.cyan.bold(timestamp)}`;
-                    } else {
+                    }
+                    else {
                         curr = ' ';
                     }
                     return {
                         name: `${timestamp} ${curr}`,
                         value: song.timestamps.indexOf(timestamp)
-                    }
+                    };
                 }).reverse())
             }
-        ]).then(async answer => {            
+        ]).then(async (answer) => {
             if (answer.timestamp === -1) {
                 console.log(chalk.yellow.dim('Cancelled timestamp selection'));
                 return openMainMenu();
             }
             song.timestampIndex = answer.timestamp;
-            session!.songs[answer.song] = song;
-            if (await saveSessionData(session!)) {
+            session.songs[answer.song] = song;
+            if (await saveSessionData(session)) {
                 console.log(`Updated ${chalk.cyan.bold.italic(song.title)} by ${chalk.cyan.bold.italic(song.artist)} to ${chalk.magenta.bold.italic(song.timestamps[song.timestampIndex])}`);
-            } else {
+            }
+            else {
                 console.log(chalk.red.italic('Failed to update session data'));
             }
             openMainMenu();
         }).catch(error => {
             console.log(chalk.red.italic('Failed to select timestamp'));
             console.log(chalk.red.italic.underline(error));
-        })
+        });
     }).catch(error => {
         console.log(chalk.red.italic('Failed to select song'));
         console.log(chalk.red.italic.underline(error));
-    })
+    });
 }
-
 // Open a menu to allow the user to delete a song from the current session
 async function deleteSongFromSession() {
     let session = await getSessionData();
@@ -109,15 +104,15 @@ async function deleteSongFromSession() {
                 return {
                     name: `${song.title} by ${song.artist} - ${song.timestamps[song.timestampIndex]}`,
                     value: session.songs.indexOf(song)
-                }
+                };
             }).reverse())
         }
-    ]).then(async answer => {
+    ]).then(async (answer) => {
         if (answer.song === -1) {
             console.log(chalk.yellow.dim('Cancelled - no song deleted'));
             return openMainMenu();
-        }        
-        const song = session.songs[answer.song]!; // Get the selected song from the session data
+        }
+        const song = session.songs[answer.song]; // Get the selected song from the session data
         inquirer.prompt([
             {
                 type: 'list',
@@ -134,28 +129,29 @@ async function deleteSongFromSession() {
                     }
                 ]
             }
-        ]).then(async answer => {
+        ]).then(async (answer) => {
             if (answer.confirm === 1) {
                 session.songs.splice(answer.song, 1); // Remove the song from the session data
                 if (await saveSessionData(session)) {
                     console.log(`Deleted ${chalk.red.bold.italic(song.title)} by ${chalk.red.bold.italic(song.artist)}`);
-                } else {
+                }
+                else {
                     console.log(chalk.red.italic('Failed to update session data'));
                 }
-            } else {
+            }
+            else {
                 console.log(chalk.yellow.dim('Cancelled - no song deleted'));
             }
             openMainMenu();
         }).catch(error => {
             console.log(chalk.red.italic('Failed to confirm song deletion'));
             console.log(chalk.red.italic.underline(error));
-        })
+        });
     }).catch(error => {
         console.log(chalk.red.italic('Failed to select song'));
         console.log(chalk.red.italic.underline(error));
-    })            
+    });
 }
-
 // Open the main menu
 async function openMainMenu() {
     // Use inquirer to generate a selection menu for which action to take
@@ -192,7 +188,7 @@ async function openMainMenu() {
                 }
             ]
         }
-    ]).then(async (answer: any) => {
+    ]).then(async (answer) => {
         switch (answer.action) {
             case 0:
                 console.log(chalk.yellow.dim('Exited menu'));
@@ -221,7 +217,6 @@ async function openMainMenu() {
     }).catch(error => {
         console.log(chalk.red.italic('Failed to select action'));
         console.log(chalk.red.italic.underline(error));
-    })
+    });
 }
-
 export { openMainMenu };
