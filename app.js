@@ -9,14 +9,14 @@ import chalk from 'chalk';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { initSession } from './session.model.js';
-import { checkIfSongUpdate } from './song.controller.js';
+import { initSession } from './models/session.model.js';
+import { checkIfSongUpdate } from './controllers/song.controller.js';
 import {
     startNewSession,
     addTimeStamp,
     markLastPlayedSong,
-    openMainMenu,
-    } from './session.controller.js';
+    } from './controllers/session.controller.js';
+import { openMainMenu } from './controllers/menu.controller.js';
 
 chalk.level = 1;
 
@@ -31,7 +31,8 @@ db.once('open', function() {
 global.SESSION_START = 0;
 
 async function startUpRoutines() {
-    await mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PWD}@${process.env.DB_CLUSTER_PATH + process.env.DB_NAME + process.env.DB_CONNECTION_PARAMS}`);
+    let connStr = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PWD}@${process.env.DB_CLUSTER_PATH + process.env.DB_NAME + process.env.DB_CONN_PARAM}`;
+    await mongoose.connect(connStr);
     await initSession();
     await checkIfSongUpdate();
 }
@@ -61,8 +62,6 @@ client.on('disconnect', () => {
     console.log(chalk.redBright(`Socket.io-client disconnected`));
 }); 
 
-
-
 // hotkey stuff
 const detectHotkey = (e, down) => {
     if ((down["LEFT ALT"] || down["RIGHT ALT"])
@@ -79,9 +78,9 @@ const detectHotkey = (e, down) => {
 }
 v.addListener(detectHotkey);
 
+
 // File Watching stuff
 const watcher = chokidar.watch(`*${process.env.VOD_FILE_EXTENSION}`, {
-    ignored: "*",
     persistent: true,
     followSymlinks: false,
     cwd: process.env.VOD_FOLDER,
@@ -91,11 +90,11 @@ const watcher = chokidar.watch(`*${process.env.VOD_FILE_EXTENSION}`, {
 
 watcher.on('ready', async () => {
     const watched = await Object.values(watcher.getWatched())[1];
-    console.log(chalk.white.dim(`Initial folder scan complete. `) + chalk.magenta.bold.italic(watched.length) + chalk.magenta.italic(' files found.'));
-    console.log(chalk.white.dim(`Watching for new files in `) + chalk.magenta.italic(process.env_VOD_FOLDER));
     
     if (watched.length > 0) {
-        await fs.stat(path.join(process.env_VOD_FOLDER, watched.at(-1)), (err, stats) => {
+        console.log(chalk.white.dim(`Initial folder scan complete. `) + chalk.magenta.bold.italic(watched.length) + chalk.magenta.italic(' files found.'));
+        console.log(chalk.white.dim(`Watching for new files in `) + chalk.magenta.italic(process.env.VOD_FOLDER));
+        await fs.stat(path.join(process.env.VOD_FOLDER, watched.at(-1)), (err, stats) => {
             if (err) {
                 throw err;
             }

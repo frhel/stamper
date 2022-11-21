@@ -5,7 +5,7 @@ dotenv.config();
 
 import chalk from 'chalk';
 
-import { getSessionData } from './session.model.js';
+import { getSessionData } from '../models/session.model.js';
 
 chalk.level = 1;
 
