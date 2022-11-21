@@ -1,4 +1,4 @@
-import fs, { watch } from 'fs';
+import fs from 'fs';
 
 import mongoose from 'mongoose';
 import chalk from 'chalk';

@@ -1,19 +1,27 @@
 {
   "name": "stamper",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Windows service that listens for a keystroke trigger to process a timestamp from a file and combine it with a song title to create a track list for YouTube videos from OBS recordings",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node app.js",
-    "watch": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run build && node build/app.js",
+    "start:dev": "nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf ./build && tsc"
   },
   "keywords": [],
   "author": "Freyr H",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "@tsconfig/node18-strictest-esm": "^1.0.1",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^18.11.9",
+    "@types/socket.io-client": "^3.0.0",
+    "nodemon": "^2.0.20",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
   },
   "dependencies": {
     "chalk": "^5.1.2",

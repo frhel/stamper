@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { createNewSession, getSessionData, saveSessionData, backupSessions } from '../models/session.model.js';
+import { createNewSession, getSessionData, saveSessionData } from '../models/session.model.js';
 import { getCurrentSong, getLastPlayedSong } from './song.controller.js';
 
 chalk.level = 1;

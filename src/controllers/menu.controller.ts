@@ -9,7 +9,8 @@ chalk.level = 1;
 
 // Open a menu to allow the user to change the current song's to a different one
 async function selectNewTimestampIndex() {
-    let session = await getSessionData();
+    
+    let session: Session = await getSessionData();
     // Iterate through the songs array and use inquirer to generate a selection menu for which song to select with latest as default
     // Then create another menu for which timestamp to select with current timestampIndex as default
     // Then update the timestampIndex in the session data and save it to the database
@@ -186,7 +187,7 @@ async function openMainMenu() {
                 }
             ]
         }
-    ]).then(async answer => {
+    ]).then(async (answer: any) => {
         switch (answer.action) {
             case 0:
                 console.log(chalk.yellow.dim('Exited menu'));

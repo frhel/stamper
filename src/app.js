@@ -16,7 +16,7 @@ import {
     addTimeStamp,
     markLastPlayedSong,
     } from './controllers/session.controller.js';
-import { openMainMenu } from './controllers/menu.controller.js';
+import { openMainMenu } from './controllers/menu.controller.ts';
 
 chalk.level = 1;
 

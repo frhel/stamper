@@ -1,19 +1,23 @@
 import fs from 'fs';
 
 import chalk from 'chalk';
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config'
 
-import { Session } from './session.mongo.js';
+import { Session, SessionInterface } from './session.mongo.js';
 
 chalk.level = 1;
 
+// Declare an interface for a collection of SessionInterface objects
+interface SessionCollection {
+    [key: string]: SessionInterface;
+}
+
 // Backup all sessions from database to a timestamped file on every startup if the file doesn't exist
 async function backupSessions(force = false) {
-    const sessions = await Session.find();
+    const sessions: SessionCollection = await Session.find();
     const date = new Date();
     const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-    const fileName = `${process.env.DB_BACKUP_FOLDER}session_backup-${dateString}.json`;
+    const fileName = `${process.env['DB_BACKUP_FOLDER']}session_backup-${dateString}.json`;
     const data = JSON.stringify(sessions);
     if (!fs.existsSync(fileName) || force) {
         await fs

@@ -50,6 +50,30 @@ const SessionSchema = new schema({
     }]
 });
 
+interface SessionInterface extends mongoose.Document {
+    startTime: Date;
+    yt_id: string;
+    songs: [{
+        artist: string;
+        title: string;
+        modifier: string;
+        isPlayed: boolean;
+        request_id: number;
+        timestampIndex: number;
+        timestamps: [string];
+    }];
+}
+
+interface SongInterface {
+    artist: string;
+    title: string;
+    modifier: string;
+    isPlayed: boolean;
+    request_id: number;
+    timestampIndex: number;
+    timestamps: [string];
+}
+
 const Session = mongoose.model('Session', SessionSchema);
 
-export { Session };
+export { Session, SessionInterface, SongInterface };
