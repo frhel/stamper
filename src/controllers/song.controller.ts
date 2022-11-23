@@ -15,17 +15,29 @@ function getCurrentSong(): ISong {
     return SL_SONG;
 }
 
+function defineSongData(): ISong {
+    return {
+        artist: '',
+        title: '',
+        modifier: '',    
+        isPlayed: false,
+        request_id: 0,
+        timestampIndex: 0,
+        timestamps: []
+    }
+}
+
 // Function to get the current song from the songlist queue
 async function fetchCurrentSong(): Promise<ISong> {
     const songQueue = await fetchSongListData(songlistAPIQueueUri);
     // Check if there is actually a song in the queue
-    let songData: ISong;
+    let songData: ISong = defineSongData();
     let entry = {};
     if (songQueue.list.length > 0) {
         // format the data for our own purposes
         entry = songQueue.list[0]; // Grab the first entry, which will be the current song
+        songData = await processSongData(entry, songData); // Process the song data
     }
-    songData = await processSongData(entry); // Process the song data
     return songData;
 }
 
@@ -38,12 +50,12 @@ async function checkIfSongUpdate() {
     }
 }
 
-function processSongData(entry: any): ISong {
+function processSongData(entry: any, songData: ISong): ISong {
     // Check whether the nonlistSong is anything other than a string.
     // If it is, we can handle the current entry as a regular song from the songlist
     // otherwise it will be handled as a manually added entry that doesn't exist in the database
     let tempData: any;
-    if (entry) {
+    if (Object.keys(entry).length) {
         if (typeof entry.nonlistSong !== "string") {
             tempData = handleSongListEntry(entry.song);
             tempData.modifier = handleSongModifiers(entry, true)
@@ -51,16 +63,16 @@ function processSongData(entry: any): ISong {
             tempData = handleNonListEntry(entry);
             tempData.modifier = handleSongModifiers(entry, false);
         }
-    }
     
-    let songData: ISong = {
-        artist: tempData.artist || '',
-        title: tempData.title || '',
-        modifier: tempData.modifier || '',    
-        isPlayed: false,
-        request_id: entry.id || '',
-        timestampIndex: 0,
-        timestamps: []
+        songData = {
+            artist: tempData.artist || '',
+            title: tempData.title || '',
+            modifier: tempData.modifier || '',    
+            isPlayed: false,
+            request_id: entry.id || '',
+            timestampIndex: 0,
+            timestamps: []
+        }
     }
     return songData;
 }
@@ -150,11 +162,11 @@ function convertHistoryToSongListData(song: any) {
 async function getLastPlayedSong(): Promise<ISong> {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
     let tempData: any = {};
-    let songData: ISong;
+    let songData: ISong = defineSongData();
     if (songHistory.items.length > 0) {
         tempData = convertHistoryToSongListData(songHistory.items[0]);
+        songData = processSongData(tempData, songData); // Process the song data
     }
-    songData = processSongData(tempData); // Process the song data
     return songData;
 }
 

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "npm run build && node build/app.js",
-    "start:dev": "nodemon",
+    "start:dev": "set DB_NAME=test& npm run build && node build/app.js",
+    "watch": "set DB_NAME=test& nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf ./build && tsc"
   },

@@ -29,13 +29,14 @@ async function backupSessions(force: boolean = false) {
     } else {
         console.log(chalk.yellowBright.italic.dim(`Backup file ${fileName} already exists`));
     }
-} backupSessions();
+}
 
 async function initSession() {
-    let latestSession = await getSessionData();
-    if (!latestSession) {
-        return;
+    if (process.env['DB_NAME'] !== 'test') {
+        await backupSessions();
     }
+    await cleanSessions();
+    let latestSession = await getSessionData();
     
     // variable with 12 hours in milliseconds
     const twelveHours = 12 * 60 * 60 * 1000;
@@ -79,41 +80,46 @@ async function saveSessionData(session: ISession) {
 // Creates a new session and returns it as an object
 async function createNewSession(startTime = global.SESSION_START) {
     const session = new Session({
-        startTime: startTime // global.SESSION_START is a global variable
+        startTime: startTime, // global.SESSION_START is a global variable
+        yt_id: '',
+        songs: []
     });
-    await session.save();
-    console.log(chalk.magenta.bold('New session created for session: ') + chalk.white.underline(session.startTime));
-    if (session == null) {
+    if (await saveSessionData(session)) {
+        console.log(chalk.magenta.bold('New session created for session: ') + chalk.white.underline(session.startTime));
+    } else if (session == null) {
         console.log(chalk.redBright.italic('Error creating new session'));
     }
     return session;
 }
 
-// Cleans up sessions that have no entries except the latest one
-// async function cleanSessions() {
-//     try {
-//         const sessions: ISession[] = await Session.find().sort({ startTime: -1 });
-//         if (sessions.length > 1) {
-//             let counter = 0;
-//             console.log(chalk.yellow.bold('Checking if any sessions can be deleted')); 
-//             for (let i = 1; i < sessions.length; i++) {               
-//                 if (sessions[i] != null){
-//                     if (sessions[i]!.songs.length > 0) {
-//                         await Session.findByIdAndDelete(sessions[i]!._id);
-//                         console.log(chalk.red.bold.italic('Deleted session: ') + chalk.white.underline.dim.italic(sessions[i]!.startTime));
-//                         counter++;
-//                     }
-//                 }
-//             }
-//             if (counter === 0) {
-//                 console.log(chalk.greenBright.bold('No sessions found that can be deleted'));
-//             } else {
-//                 console.log(chalk.red.bold(`Deleted a total of ${counter} sessions`));
-//             }
-//         }
-//     } catch (error) {
-//         console.error(chalk.red.underline.bold('Error while cleaning sessions: ', error));
-//     }
-// }
+
+async function cleanSessions() {
+    if (process.env['DB_NAME'] !== 'test') {
+        return;
+    }
+    try {
+        const sessions: ISession[] = await Session.find().sort({ startTime: -1 });
+        if (sessions.length > 1) {
+            let counter = 0;
+            console.log(chalk.yellow.bold('Checking if any sessions can be deleted')); 
+            for (let i = 1; i < sessions.length; i++) {               
+                if (sessions[i] != null) {
+                    if (sessions[i]!.songs.length === 0) {
+                        await Session.findOneAndDelete( { startTime: sessions[i]!.startTime } );
+                        console.log(chalk.red.bold.italic('Deleted session: ') + chalk.white.underline.dim.italic(sessions[i]!.startTime));
+                        counter++;
+                    }
+                }
+            }
+            if (counter === 0) {
+                console.log(chalk.greenBright.bold('No sessions found that can be deleted'));
+            } else {
+                console.log(chalk.red.bold(`Deleted a total of ${counter} sessions`));
+            }
+        }
+    } catch (error) {
+        console.error(chalk.red.underline.bold('Error while cleaning sessions: ', error));
+    }
+}
 
 export { createNewSession, saveSessionData, initSession, getSessionData, backupSessions };

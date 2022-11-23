@@ -31,11 +31,15 @@ async function addTimeStamp() {
     // Get the current song from the song queue on streamersonglist.com
     let song: ISong = getCurrentSong(); // Returns an object with the current song's data from streamersonglist.com
     // Check if the queue is empty and do nothing if it is
-    if (Object.keys(song).length === 0) {
+    if (song.title === '') {
         console.log('Nothing changed. '+chalk.red.italic('Queue currently empty'));
         return; 
     }    
-    let session = await getSessionData(); // Load the session data from database    
+    let session = await getSessionData(); // Load the session data from database
+    if (!session) {
+        console.log(chalk.red.italic('Failed to get session data'));
+        return;
+    }
     let songIndex = checkIfSongInSession(session, song); // returns -1 if the song is not in the session data
 
     // If the song does not exist in the session data, add it to the session data and return the index of the new song
