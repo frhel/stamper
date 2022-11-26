@@ -41,7 +41,7 @@ async function initSession() {
     // variable with 12 hours in milliseconds
     const twelveHours = 12 * 60 * 60 * 1000;
     if (!latestSession || Date.now() - latestSession.startTime.getTime() > twelveHours) {
-        console.log(chalk.bgYellowBright.bold.underline(' Old session or no session found, creating new one '));
+        console.log(chalk.yellow.bold.underline(' Old session or no session found, creating new one '));
         latestSession = await createNewSession();
     } else {
         console.log(chalk.bgGreenBright.bold.underline(' Session found, loading data '));
