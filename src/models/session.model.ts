@@ -31,10 +31,19 @@ async function backupSessions(force: boolean = false) {
     }
 }
 
+// Does some initial setup for the session at the start of the program after the database has been connected
+// Backs up the sessions and then cleans them up
+// If there is no session in the database, it creates a new one
+// This function is called in app.ts
 async function initSession() {
+    // only backup sessions if we're not in a test environment
     if (process.env['DB_NAME'] !== 'test') {
         await backupSessions();
     }
+
+    // Clean up any sessions that don't have any songs saved to them
+    // We do this AFTER backing up the sessions to avoid losing data
+    // Would rather back up the useless sessions than lose useful ones if something goes wrong
     await cleanSessions();
     let latestSession = await getSessionData();
     
@@ -45,6 +54,8 @@ async function initSession() {
         latestSession = await createNewSession();
     } else {
         console.log(chalk.bgGreenBright.bold.underline(' Session found, loading data '));
+        // Doesn't actually return anything, just sets the global session start time to match the latest session start time
+        // For other functions to use as a reference
         global.SESSION_START = latestSession.startTime; 
     }
     console.log(chalk.white.dim('Loaded session: ') + chalk.magenta.italic(latestSession?.startTime));
@@ -60,13 +71,14 @@ const getSessionData = async (): Promise<ISession> => {
     return session;
 }
 
-// 
+// Saves the session data to the database
+// Returns true if successful, false if not
 async function saveSessionData(session: ISession) {
     try {
         await Session.updateOne(
-            {startTime: session.startTime},
-            session,
-            {upsert: true}
+            {startTime: session.startTime}, // find the session with the same start time
+            session, // update the session with the new data
+            {upsert: true} // make sure to update the session if it already exists
         );
     } catch (err) {
         console.log(chalk.redBright.italic('Error while saving session to database'));
@@ -78,6 +90,9 @@ async function saveSessionData(session: ISession) {
 }
 
 // Creates a new session and returns it as an object
+// Default the startTime parameter to the SESSION_START global variable
+// So that we can overwrite the startTime if we want to
+// But also call it without any parameters to use the global variable as default
 async function createNewSession(startTime = global.SESSION_START) {
     const session = new Session({
         startTime: startTime, // global.SESSION_START is a global variable
@@ -92,7 +107,8 @@ async function createNewSession(startTime = global.SESSION_START) {
     return session;
 }
 
-
+// Cleans up any sessions that don't have any songs saved to them
+// We do this AFTER backing up the sessions to avoid losing data
 async function cleanSessions() {
     if (process.env['DB_NAME'] !== 'test') {
         return;

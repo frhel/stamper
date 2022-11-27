@@ -9,7 +9,8 @@
     "start:dev": "set DB_NAME=test& npm run build && node build/app.js",
     "watch": "set DB_NAME=test& nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rimraf ./build && tsc"
+    "build": "rimraf ./build && tsc",
+    "import": "npm run build && node build/oldImport.js"
   },
   "keywords": [],
   "author": "Freyr H",

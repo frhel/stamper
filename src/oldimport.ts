@@ -70,18 +70,20 @@ async function importDataFromFileByLinesAndReturnAsMap(): Promise<ISession> {
         console.log(chalk.redBright.italic('Error while importing data: No lines found'));
         return session;
     }
-    session.startTime = new Date(lines[0]!.split(', ').reverse().join(' ').slice(0, -2));
+    session.startTime = await new Date(lines[0]!.split(', ').reverse().join(' ').slice(0, -2));
+    console.log(session.startTime);
     session.yt_id = lines[1]!;
 
     let songs: ISong[] = [];
     let songInfo: ISong;
     for (let i = 2; i < lines.length; i++) {
         const line = lines[i]!;
-        let timeStamp = line.slice(0, 7);
-        const rest = line.slice(8).trim().split(' // ');
-        const title = rest[0]!.split(' by ')[0]!.toString();
-        const artist = rest[0]!.split(' by ')[1];
-        const modifier = rest[1];
+        const timeStamp = line.slice(0, 7);
+        const rest = line.slice(8).trim().split('//');
+        const songArr = rest[0]!.split(' by ');
+        const title = songArr[0]!.toString().trim();
+        const artist = songArr[1];
+        const modifier = rest[1]?.toString().trim();
         songInfo = {
             artist: '',
             timestamps: [timeStamp],
@@ -91,8 +93,8 @@ async function importDataFromFileByLinesAndReturnAsMap(): Promise<ISession> {
             isPlayed: false,
             request_id: 0,
         }
-        if (artist) {
-            songInfo.artist = artist;
+        if (artist && artist !== 'dippy2230') {
+            songInfo.artist = artist.toString().trim();
         }
         if (modifier && modifier !== 'Cover') {
             songInfo.modifier = modifier;
@@ -108,6 +110,7 @@ async function importDataFromFileByLinesAndReturnAsMap(): Promise<ISession> {
     return session;
 }
 
+// Improvised song with lyrics by dip
 
 // File Change Watching stuff
 
