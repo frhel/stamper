@@ -50,7 +50,7 @@ async function exportYouTubeTrackList() {
     console.log(contents);
     // write the contents of the contents variable to a file
     // in the chapter_exports directory with export_session.startTime.txt as the filename
-    let dateString = session.startTime.toLocaleString('default', { month: 'long' }) + ' ' + session.startTime.getDay() + ', ' + session.startTime.getFullYear();
+    let dateString = session.startTime.toLocaleString('default', { month: 'long' }) + ' ' + session.startTime.getDate() + ', ' + session.startTime.getFullYear();
     let fileName = `${process.env['CHAPTER_EXPORT_FOLDER']}${dateString} - YouTube Track List.txt`;
     await fs
         .promises

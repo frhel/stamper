@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import 'dotenv/config'
 
 import { initSession } from './models/session.model.js';
-import { checkIfSongUpdate } from './controllers/song.controller.js';
+import { checkIfSongUpdate } from './models/song.model.js';
 import {
     startNewSession,
     addTimeStamp,

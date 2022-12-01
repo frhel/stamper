@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { createNewSession, getSessionData, saveSessionData } from '../models/session.model.js';
-import { getCurrentSong, getLastPlayedSong } from './song.controller.js';
+import { getCurrentSong, getLastPlayedSong } from '../models/song.model.js';
 import type { ISession } from '../interfaces/ISession.js';
 import type { ISong } from '../interfaces/ISong.js';
 

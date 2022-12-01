@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-import { updateSessionOnSongChange } from './session.controller.js';
+import { updateSessionOnSongChange } from '../controllers/session.controller.js';
 import type { ISong } from '../interfaces/ISong';
 
 // https://api.streamersonglist.com/docs/ for endpoints. 
@@ -15,7 +15,7 @@ function getCurrentSong(): ISong {
     return SL_SONG;
 }
 
-function defineSongData(): ISong {
+function shapeSongData(): ISong {
     return {
         artist: '',
         title: '',
@@ -31,7 +31,7 @@ function defineSongData(): ISong {
 async function fetchCurrentSong(): Promise<ISong> {
     const songQueue = await fetchSongListData(songlistAPIQueueUri);
     // Check if there is actually a song in the queue
-    let songData: ISong = defineSongData();
+    let songData: ISong = shapeSongData();
     let entry = {};
     if (songQueue.list.length > 0) {
         // format the data for our own purposes
@@ -65,8 +65,8 @@ function processSongData(entry: any, songData: ISong): ISong {
         }
     
         songData = {
-            artist: tempData.artist || '',
-            title: tempData.title || '',
+            artist: tempData.artist.trim() || '',
+            title: tempData.title.trim() || '',
             modifier: tempData.modifier || '',    
             isPlayed: false,
             request_id: entry.id || '',
@@ -162,7 +162,7 @@ function convertHistoryToSongListData(song: any) {
 async function getLastPlayedSong(): Promise<ISong> {
     const songHistory = await fetchSongListData(songlistAPIHistoryUri);
     let tempData: any = {};
-    let songData: ISong = defineSongData();
+    let songData: ISong = shapeSongData();
     if (songHistory.items.length > 0) {
         tempData = convertHistoryToSongListData(songHistory.items[0]);
         songData = processSongData(tempData, songData); // Process the song data
