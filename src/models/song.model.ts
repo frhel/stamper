@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import { updateSessionOnSongChange } from '../controllers/session.controller.js';
 import type { ISong } from '../interfaces/ISong';
 
-// https://api.streamersonglist.com/docs/ for endpoints. 
+// https://api.streamersonglist.com/docs/ for endpoints.
 const streamerId = 7325; // Numerical value of endpoint - Absolutely no clue where I found this to begin with
 const songlistAPIUri = `https://api.streamersonglist.com`;
 const songlistAPIQueueUri = `${songlistAPIUri}/v1/streamers/${streamerId}/queue`;
@@ -19,7 +19,7 @@ function shapeSongData(): ISong {
     return {
         artist: '',
         title: '',
-        modifier: '',    
+        modifier: '',
         isPlayed: false,
         request_id: 0,
         timestampIndex: 0,
@@ -63,11 +63,11 @@ function processSongData(entry: any, songData: ISong): ISong {
             tempData = handleNonListEntry(entry);
             tempData.modifier = handleSongModifiers(entry, false);
         }
-    
+
         songData = {
             artist: tempData.artist.trim() || '',
             title: tempData.title.trim() || '',
-            modifier: tempData.modifier || '',    
+            modifier: tempData.modifier || '',
             isPlayed: false,
             request_id: entry.id || '',
             timestampIndex: 0,
@@ -94,7 +94,7 @@ function handleNonListEntry(song: any) {
         splitStr = song.nonlistSong.split(" - ");
     }
 
-    // Set the return object depending on whether we split the string or not. 
+    // Set the return object depending on whether we split the string or not.
     // If the string wasn't split, the request was malformed by mod and we add the whole thing to title
     if (splitStr.length > 0) {
         retObj = {
