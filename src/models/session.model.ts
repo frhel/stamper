@@ -46,7 +46,7 @@ async function initSession() {
     // Would rather back up the useless sessions than lose useful ones if something goes wrong
     await cleanSessions();
     let latestSession = await getSessionData();
-    
+
     // variable with 12 hours in milliseconds
     const twelveHours = 12 * 60 * 60 * 1000;
     if (!latestSession || Date.now() - latestSession.startTime.getTime() > twelveHours) {
@@ -56,7 +56,7 @@ async function initSession() {
         console.log(chalk.bgGreenBright.bold.underline(' Session found, loading data '));
         // Doesn't actually return anything, just sets the global session start time to match the latest session start time
         // For other functions to use as a reference
-        global.SESSION_START = latestSession.startTime; 
+        global.SESSION_START = latestSession.startTime;
     }
     console.log(chalk.white.dim('Loaded session: ') + chalk.magenta.italic(latestSession?.startTime));
 }
@@ -76,9 +76,9 @@ const getSessionData = async (): Promise<ISession> => {
 async function saveSessionData(session: ISession) {
     try {
         await Session.updateOne(
-            {startTime: session.startTime}, // find the session with the same start time
+            { startTime: session.startTime }, // find the session with the same start time
             session, // update the session with the new data
-            {upsert: true} // make sure to update the session if it already exists
+            { upsert: true } // make sure to update the session if it already exists
         );
     } catch (err) {
         console.log(chalk.redBright.italic('Error while saving session to database'));
@@ -86,7 +86,7 @@ async function saveSessionData(session: ISession) {
         return false;
     }
     // console.log(chalk.greenBright.italic('Successfully saved session to database'));
-    return true;    
+    return true;
 }
 
 // Creates a new session and returns it as an object
@@ -117,11 +117,11 @@ async function cleanSessions() {
         const sessions: ISession[] = await Session.find().sort({ startTime: -1 });
         if (sessions.length > 1) {
             let counter = 0;
-            console.log(chalk.yellow.bold('Checking if any sessions can be deleted')); 
-            for (let i = 1; i < sessions.length; i++) {               
+            console.log(chalk.yellow.bold('Checking if any sessions can be deleted'));
+            for (let i = 1; i < sessions.length; i++) {
                 if (sessions[i] != null) {
                     if (sessions[i]!.songs.length === 0) {
-                        await Session.findOneAndDelete( { startTime: sessions[i]!.startTime } );
+                        await Session.findOneAndDelete({ startTime: sessions[i]!.startTime });
                         console.log(chalk.red.bold.italic('Deleted session: ') + chalk.white.underline.dim.italic(sessions[i]!.startTime));
                         counter++;
                     }

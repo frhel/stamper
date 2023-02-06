@@ -1,3 +1,5 @@
+import https from 'https';
+
 import fetch from 'node-fetch';
 
 import { updateSessionOnSongChange } from '../controllers/session.controller.js';
@@ -28,6 +30,28 @@ function shapeSongData(): ISong {
     }
 }
 
+function markSongAsPlayed() {
+    const options = {
+        hostname: 'api.streamersonglist.com',
+        port: 443,
+        path: `/v1/streamers/${streamerId}/queue/${SL_SONG.request_id}/played`,
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${process.env['SSL_TOKEN']}`
+        }
+    }
+
+    const req = https.request(options, _ => {
+    })
+
+    req.on('error', error => {
+        console.error(error)
+    })
+
+    req.end()
+}
+
 // Function to get the current song from the songlist queue
 async function fetchCurrentSong(): Promise<ISong> {
     const songQueue = await fetchSongListData(songlistAPIQueueUri);
@@ -47,7 +71,7 @@ async function checkIfSongUpdate(): Promise<ISong> {
     const currentSong = await fetchCurrentSong();
     if (currentSong !== SL_SONG) {
         SL_SONG = currentSong;
-        updateSessionOnSongChange();
+        await updateSessionOnSongChange();
     }
     return currentSong;
 }
@@ -160,6 +184,7 @@ function fetchSongListData(URI: string) {
 function convertHistoryToSongListData(song: any) {
     if (song.song) {
         song.song.attributeIds = [];
+        song.song.comment = '';
     }
     return song;
 }
@@ -176,4 +201,4 @@ async function getLastPlayedSong(): Promise<ISong> {
     return songData;
 }
 
-export { getCurrentSong, getLastPlayedSong, checkIfSongUpdate }
+export { getCurrentSong, getLastPlayedSong, checkIfSongUpdate, markSongAsPlayed }

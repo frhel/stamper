@@ -39,7 +39,7 @@ async function importAndSaveSessionToDatabase() {
 
 // read data from file and create new Session in database if it doesn't exist by checking the start time
 // UNCOMMENT THIS AND USE IT TO FUCKING SAVE THE DATA TO THE DATABASE
-async function saveSessionToDatabase(session: ISession): Promise<boolean> {  
+async function saveSessionToDatabase(session: ISession): Promise<boolean> {
     // loop over Map and create new Session for each entry
     // upsert sessionObj as Session into database
     try {
@@ -87,6 +87,7 @@ async function importDataFromFileByLinesAndReturnAsMap(): Promise<ISession> {
         songInfo = {
             artist: '',
             timestamps: [timeStamp],
+            comment: '',
             timestampIndex: 0,
             title: title,
             modifier: '',
@@ -101,10 +102,10 @@ async function importDataFromFileByLinesAndReturnAsMap(): Promise<ISession> {
         }
         // if (modifier && modifier.slice(0, -1) !== 'Cover') {
         //     songInfo.modifier = modifier.slice(0, -1);
-        // } 
+        // }
         songInfo.isPlayed = true;
         songInfo.request_id = i;
-        songs.push(songInfo);  
+        songs.push(songInfo);
     }
     session.songs = songs;
     return session;
@@ -134,7 +135,7 @@ watcher.on('ready', () => {
 // async function importDataFromFileByLinesAndReturnAsMap() {
 //     const data = await fs.promises.readFile('./backups/sessiondata -16-11-2022.json', 'utf8');
 //     const json = JSON.parse(data);
-    
+
 //     const songs = new Map();
 //     songs.set('startTime', new Date('2022-11-16T14:55:16.271Z'));
 //     songs.set('yt_id', 'S8Azs7rKqng');

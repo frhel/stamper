@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import 'dotenv/config'
 
 import { initSession } from './models/session.model.js';
-import { checkIfSongUpdate } from './models/song.model.js';
+import { checkIfSongUpdate, markSongAsPlayed } from './models/song.model.js';
 import {
     startNewSession,
     addTimeStamp,
@@ -57,7 +57,7 @@ client.on('queue-update', async () => {
 });
 
 client.on('new-playhistory', async () => {
-        markLastPlayedSong();
+    markLastPlayedSong();
 });
 client.on('disconnect', () => {
     console.log(chalk.redBright(`Socket.io-client disconnected`));
@@ -74,6 +74,9 @@ const detectHotkey = (e: any, down: any) => {
         }
         if (e.state == "DOWN" && e.name == "R") {
             openMainMenu();
+        }
+        if (e.state == "DOWN" && e.name == "W") {
+            markSongAsPlayed();
         }
     }
 }
