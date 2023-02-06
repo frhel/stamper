@@ -19,6 +19,7 @@ function shapeSongData(): ISong {
     return {
         artist: '',
         title: '',
+        comment: '',
         modifier: '',
         isPlayed: false,
         request_id: 0,
@@ -42,12 +43,13 @@ async function fetchCurrentSong(): Promise<ISong> {
 }
 
 // Function to check if the current song has changed
-async function checkIfSongUpdate() {
+async function checkIfSongUpdate(): Promise<ISong> {
     const currentSong = await fetchCurrentSong();
     if (currentSong !== SL_SONG) {
         SL_SONG = currentSong;
         updateSessionOnSongChange();
     }
+    return currentSong;
 }
 
 function processSongData(entry: any, songData: ISong): ISong {
@@ -67,11 +69,12 @@ function processSongData(entry: any, songData: ISong): ISong {
         songData = {
             artist: tempData.artist.trim() || '',
             title: tempData.title.trim() || '',
+            comment: tempData.comment.trim() || '',
             modifier: tempData.modifier || '',
             isPlayed: false,
             request_id: entry.id || '',
             timestampIndex: 0,
-            timestamps: []
+            timestamps: [],
         }
     }
     return songData;
@@ -81,6 +84,7 @@ function handleSongListEntry(song: any) {
     return {
         artist: song.artist,
         title: song.title,
+        comment: song.comment
     };
 }
 
@@ -100,11 +104,13 @@ function handleNonListEntry(song: any) {
         retObj = {
             artist: splitStr[0],
             title: splitStr[1],
+            comment: '',
         }
     } else {
         retObj = {
             artist: '',
             title: song.nonlistSong,
+            comment: '',
         }
     }
     return retObj;

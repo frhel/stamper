@@ -16,6 +16,7 @@ import {
     markLastPlayedSong,
     } from './controllers/session.controller.js';
 import { openMainMenu } from './controllers/menu.controller.js';
+import { open_chord_chart } from './controllers/chord_chart.controller.js';
 
 chalk.level = 1;
 
@@ -48,10 +49,11 @@ client.on('connect', () => {
     // process.env.STREAMER_ID is the numeric `id` from `/streamers/<streamer-name` endpoint
     // but needs to be cast as a string for the socket event
     client.emit('join-room', `${process.env['STREAMER_ID']}`);
-    
+
 });
-client.on('queue-update', () => {
-    checkIfSongUpdate();
+client.on('queue-update', async () => {
+    let currSong = await checkIfSongUpdate();
+    open_chord_chart(currSong);
 });
 
 client.on('new-playhistory', async () => {
@@ -59,21 +61,21 @@ client.on('new-playhistory', async () => {
 });
 client.on('disconnect', () => {
     console.log(chalk.redBright(`Socket.io-client disconnected`));
-}); 
+});
 
 // hotkey stuff
 const detectHotkey = (e: any, down: any) => {
     if ((down["LEFT ALT"] || down["RIGHT ALT"])
         && (down["LEFT SHIFT"] || down["RIGHT SHIFT"])
-        && (down["LEFT CTRL"] || down["RIGHT CTRL"])) {      
-        
+        && (down["LEFT CTRL"] || down["RIGHT CTRL"])) {
+
         if (e.state == "DOWN" && e.name == "T") {
             addTimeStamp();
         }
         if (e.state == "DOWN" && e.name == "R") {
             openMainMenu();
         }
-    }  
+    }
 }
 v.addListener(detectHotkey);
 
@@ -89,7 +91,7 @@ const watcher = chokidar.watch(`*${process.env['VOD_FILE_EXTENSION']}`, {
 
 watcher.on('ready', async () => {
     const watched: any = await Object.values(watcher.getWatched())[1];
-    
+
     if (watched.length > 0) {
         console.log(chalk.white.dim(`Initial folder scan complete. `) + chalk.magenta.bold.italic(watched.length) + chalk.magenta.italic(' files found.'));
         console.log(chalk.white.dim(`Watching for new files in `) + chalk.magenta.italic(process.env['VOD_FOLDER']));
@@ -107,7 +109,7 @@ watcher.on('ready', async () => {
         });
     } else {
         setSESSION_STARTDefault();
-    }    
+    }
     startUpRoutines();
 
     watcher.on('add', async (_, stats) => {

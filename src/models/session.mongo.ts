@@ -25,6 +25,11 @@ const SessionSchema = new Schema({
             type: String,
             required: true,
         },
+        comment: {
+            type: String,
+            required: true,
+            default: '',
+        },
         modifier: {
             type: String,
             required: true,
@@ -43,7 +48,7 @@ const SessionSchema = new Schema({
             type: Number,
             required: true,
         },
-    
+
         timestamps: [{
             type: String,
             required: true,

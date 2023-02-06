@@ -33,8 +33,8 @@ async function addTimeStamp() {
     // Check if the queue is empty and do nothing if it is
     if (song.title === '') {
         console.log('Nothing changed. '+chalk.red.italic('Queue currently empty'));
-        return; 
-    }    
+        return;
+    }
     let session = await getSessionData(); // Load the session data from database
     if (!session) {
         console.log(chalk.red.italic('Failed to get session data'));
@@ -105,15 +105,15 @@ async function markLastPlayedSong() {
     let songs = session.songs;
     if (songs.length > 0) {
         for(let i = 0; i < songs.length; i++) {
-            if (!songs[i]!.isPlayed) {                  
+            if (!songs[i]!.isPlayed) {
                 if (song.artist === songs[i]!.artist && song.title === songs[i]!.title) {
                     songs[i]!.isPlayed = true;
                     session.songs = songs;
                     if (await saveSessionData(session)) {
                         console.log(`${chalk.cyan.bold.italic(song.title)} by ${chalk.cyan.bold.italic(song.artist)} marked as played`);
                         return;
-                    }                    
-                } 
+                    }
+                }
             }
         }
     }
@@ -133,17 +133,17 @@ function checkIfSongInSession(session: ISession, song: ISong): number {
         if (session.songs[i]!.request_id === song.request_id) {
             return i; // return the index of the song in the session data
         }
-    }    
+    }
     return -1; // return -1 if the song is not in the session data
 }
 
 // function to create a new timestamp from the session start time - current time
 function createTimeStamp() {
-    // Creates a timestamp in the format of '0:00:00' from 
+    // Creates a timestamp in the format of '0:00:00' from
     // the difference between the current time and the start time
     const timeStamp = new Date(Date.now() - global.SESSION_START.getTime()).toISOString().substr(12,7);
     return timeStamp;
 }
 
 
-export { addTimeStamp, startNewSession, markLastPlayedSong, updateSessionOnSongChange } 
+export { addTimeStamp, startNewSession, markLastPlayedSong, updateSessionOnSongChange }
